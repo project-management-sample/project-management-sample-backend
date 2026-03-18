@@ -1,0 +1,90 @@
+name: ✨ 機能要望
+description: 新しい機能をリクエストする場合はこちらを使用してください
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        機能要望をいただきありがとうございます。
+        以下の情報を入力してください。WBS管理のため、担当者、期間、重要度は必須項目です。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 機能の説明
+      description: どのような機能を追加したいですか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 動機・背景
+      description: この機能が必要な理由を説明してください
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefit
+    attributes:
+      label: 期待される効果
+      description: この機能がもたらす利点は何ですか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 受け入れ条件
+      description: この機能が完成とされる条件を入力してください
+      placeholder: |
+        - [ ] 条件1
+        - [ ] 条件2
+        - [ ] 条件3
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "重要度"
+      description: この機能の優先度を選択してください
+      options:
+        - "必須 (最優先で実装が必要)"
+        - "高 (早期実装が望ましい)"
+        - "中 (実装予定あり)"
+        - "低 (将来的に検討)"
+    validations:
+      required: true
+
+  - type: input
+    id: assignee
+    attributes:
+      label: "担当者 (GitHub ユーザー名)"
+      description: "@ユーザー名で記入してください"
+      placeholder: "@username"
+    validations:
+      required: true
+
+  - type: input
+    id: target_date
+    attributes:
+      label: "目標完了日"
+      description: 実装予定日を入力してください (YYYY-MM-DD形式)
+      placeholder: "2026-04-30"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 追加情報
+      description: 参考となるドキュメント、デザイン、リンクなど
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: チェックリスト
+      options:
+        - label: 類似の機能リクエストがないか確認した
+          required: false
+        - label: 実装方法についての案がある
+          required: false

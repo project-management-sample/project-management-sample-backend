@@ -1,0 +1,101 @@
+name: 🐛 バグ報告
+description: バグを報告する場合はこちらを使用してください
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグを報告いただきありがとうございます。
+        以下の情報を入力してください。WBS管理のため、担当者、期間、重要度は必須項目です。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 問題の説明
+      description: どのような問題が発生していますか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 再現手順
+      description: バグを再現するための手順を説明してください
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待される動作
+      description: 期待される動作を説明してください
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      description: 実際の動作を説明してください
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 環境情報
+      description: |
+        - OS: 
+        - Python バージョン: 
+        - その他関連情報:
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "重要度"
+      description: このバグの重要度を選択してください
+      options:
+        - "緊急 (Blocker - システムが動作しない)"
+        - "高 (Critical - 主要機能が動作しない)"
+        - "中 (Major - 一部機能に影響)"
+        - "低 (Minor - 軽微な問題)"
+    validations:
+      required: true
+
+  - type: input
+    id: assignee
+    attributes:
+      label: "担当者 (GitHub ユーザー名)"
+      description: "@ユーザー名で記入してください"
+      placeholder: "@username"
+    validations:
+      required: true
+
+  - type: input
+    id: due_date
+    attributes:
+      label: "期日"
+      description: 修正予定日を入力してください (YYYY-MM-DD形式)
+      placeholder: "2026-03-31"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 追加情報
+      description: スクリーンショットやログなど、参考になる情報があればお願いします
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: チェックリスト
+      options:
+        - label: 既知の問題かどうか確認した
+          required: false
+        - label: 最新バージョンで確認した
+          required: false

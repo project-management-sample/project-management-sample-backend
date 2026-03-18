@@ -1,0 +1,107 @@
+name: 📋 タスク
+description: 開発タスクを登録する場合はこちらを使用してください
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        新しいタスクを登録いただきありがとうございます。
+        以下の情報を入力してください。WBS管理のため、担当者、期間、重要度は必須項目です。
+
+  - type: textarea
+    id: title
+    attributes:
+      label: タスク内容
+      description: このタスクで実施すべき内容を説明してください
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 詳細説明
+      description: より詳しい背景や要件を記入してください
+    validations:
+      required: true
+
+  - type: textarea
+    id: subtasks
+    attributes:
+      label: サブタスク
+      description: |
+        このタスクを分割できるサブタスクがあれば記入してください
+        (Markdown のチェックボックス形式)
+      placeholder: |
+        - [ ] サブタスク1
+        - [ ] サブタスク2
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: 依存関係
+      description: |
+        このタスクが他のタスクに依存している場合は、関連するIssue番号を記入してください
+        例: #123, #456
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "重要度"
+      description: このタスクの優先度を選択してください
+      options:
+        - "P0 - 最優先 (ブロッカー)"
+        - "P1 - 高優先"
+        - "P2 - 中優先"
+        - "P3 - 低優先"
+    validations:
+      required: true
+
+  - type: input
+    id: assignee
+    attributes:
+      label: "担当者 (GitHub ユーザー名)"
+      description: "@ユーザー名で記入してください"
+      placeholder: "@username"
+    validations:
+      required: true
+
+  - type: input
+    id: start_date
+    attributes:
+      label: "開始予定日"
+      description: タスク開始予定日を入力してください (YYYY-MM-DD形式)
+      placeholder: "2026-03-20"
+    validations:
+      required: true
+
+  - type: input
+    id: due_date
+    attributes:
+      label: "完了予定日"
+      description: タスク完了予定日を入力してください (YYYY-MM-DD形式)
+      placeholder: "2026-03-31"
+    validations:
+      required: true
+
+  - type: input
+    id: estimated_hours
+    attributes:
+      label: "見積もり（時間）"
+      description: この タスクに必要と予想される時間を入力してください
+      placeholder: "40"
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: 備考
+      description: その他の注記や参考情報
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: チェックリスト
+      options:
+        - label: 必要な情報が全て提供されている
+          required: false
+        - label: 担当者と期日を確認した
+          required: false
