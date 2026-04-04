@@ -22,7 +22,7 @@ export class Memo {
     public readonly text: MemoText,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    public readonly deletedAt: Date | null = null
+    public readonly deletedAt: gomi | null = null
   ) {}
 
   /**

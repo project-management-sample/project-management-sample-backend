@@ -1,38 +1,37 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { CreateMemoUseCase } from '../../usecase/create_memo_usecase';
 import { FindMemosUseCase } from '../../usecase/find_memos_usecase';
+import { SearchMemosUseCase } from '../../usecase/search_memos_usecase';
 import { UpdateMemoUseCase } from '../../usecase/update_memo_usecase';
 import { DeleteMemoUseCase } from '../../usecase/delete_memo_usecase';
-import {
-  InvalidMemoTextError,
-  MemoAccessDeniedError,
-  MemoNotFoundError,
-} from '../../domain/entities/errors';
-import { logger } from '../../infrastructure/external/logger';
+import { Pagination } from '../../domain/value_objects/pagination';
+import { MemoMapper } from '../mappers/memo_mapper';
+import { MemoValidator } from '../validators/memo_validator';
 
 /**
  * コントローラー: メモ API
  *
  * 責務:
  * - HTTP リクエストの受け取り
- * - 入力値のフォーマット検証（軽微）
+ * - Validator による入力検証
  * - ユースケースの呼び出し
- * - レスポンス形式の構築
+ * - Mapper による DTO 変換
  * - HTTP ステータスコードの決定
+ * - ドメインエラーは next(err) でグローバルエラーハンドラーへ委譲
  */
 export class MemoController {
   constructor(
     private readonly createMemoUseCase: CreateMemoUseCase,
     private readonly findMemosUseCase: FindMemosUseCase,
+    private readonly searchMemosUseCase: SearchMemosUseCase,
     private readonly updateMemoUseCase: UpdateMemoUseCase,
     private readonly deleteMemoUseCase: DeleteMemoUseCase
   ) {}
 
   /**
    * POST /api/v1/memos
-   * メモを作成する
    */
-  async create(req: Request, res: Response): Promise<void> {
+  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.sub;
       if (!userId) {
@@ -40,35 +39,19 @@ export class MemoController {
         return;
       }
 
-      const { text } = req.body;
+      const { text } = MemoValidator.validateCreateInput(req.body);
+      const memo = await this.createMemoUseCase.execute({ userId, text });
 
-      if (!text || typeof text !== 'string') {
-        res.status(400).json({
-          error_code: 'E001',
-          message: '入力値が不正です',
-          details: { field: 'text', reason: '1-1000文字で入力してください' },
-        });
-        return;
-      }
-
-      const memo = await this.createMemoUseCase.execute(userId, text);
-
-      res.status(201).json({
-        id: memo.id,
-        text: memo.textValue,
-        createdAt: memo.createdAt,
-        updatedAt: memo.updatedAt,
-      });
+      res.status(201).json(MemoMapper.toResponse(memo));
     } catch (error) {
-      this.handleError(error, res);
+      next(error);
     }
   }
 
   /**
    * GET /api/v1/memos
-   * メモ一覧を取得する（ページネーション・キーワード検索対応）
    */
-  async list(req: Request, res: Response): Promise<void> {
+  async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.sub;
       if (!userId) {
@@ -76,38 +59,35 @@ export class MemoController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const pagination = Pagination.create(
+        parseInt(req.query.page as string) || Pagination.DEFAULT_PAGE,
+        parseInt(req.query.limit as string) || Pagination.DEFAULT_LIMIT
+      );
       const keyword = req.query.keyword as string | undefined;
 
       let result;
       if (keyword && keyword.trim()) {
-        result = await this.findMemosUseCase.search(userId, keyword.trim(), page, limit);
+        result = await this.searchMemosUseCase.execute({
+          userId,
+          keyword: keyword.trim(),
+          pagination,
+        });
       } else {
-        result = await this.findMemosUseCase.execute(userId, page, limit);
+        result = await this.findMemosUseCase.execute({ userId, pagination });
       }
 
-      res.status(200).json({
-        data: result.memos.map((memo) => ({
-          id: memo.id,
-          text: memo.textValue,
-          createdAt: memo.createdAt,
-          updatedAt: memo.updatedAt,
-        })),
-        total: result.total,
-        page: result.page,
-        limit: result.limit,
-      });
+      res.status(200).json(
+        MemoMapper.toListResponse(result.memos, result.total, result.page, result.limit)
+      );
     } catch (error) {
-      this.handleError(error, res);
+      next(error);
     }
   }
 
   /**
    * PATCH /api/v1/memos/:id
-   * メモを更新する
    */
-  async update(req: Request, res: Response): Promise<void> {
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.sub;
       if (!userId) {
@@ -116,35 +96,19 @@ export class MemoController {
       }
 
       const { id } = req.params;
-      const { text } = req.body;
+      const { text } = MemoValidator.validateUpdateInput(req.body);
+      const memo = await this.updateMemoUseCase.execute({ userId, memoId: id, text });
 
-      if (!text || typeof text !== 'string') {
-        res.status(400).json({
-          error_code: 'E001',
-          message: '入力値が不正です',
-          details: { field: 'text', reason: '1-1000文字で入力してください' },
-        });
-        return;
-      }
-
-      const memo = await this.updateMemoUseCase.execute(userId, id, text);
-
-      res.status(200).json({
-        id: memo.id,
-        text: memo.textValue,
-        createdAt: memo.createdAt,
-        updatedAt: memo.updatedAt,
-      });
+      res.status(200).json(MemoMapper.toResponse(memo));
     } catch (error) {
-      this.handleError(error, res);
+      next(error);
     }
   }
 
   /**
    * DELETE /api/v1/memos/:id
-   * メモを削除する
    */
-  async delete(req: Request, res: Response): Promise<void> {
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.sub;
       if (!userId) {
@@ -153,36 +117,11 @@ export class MemoController {
       }
 
       const { id } = req.params;
-
-      await this.deleteMemoUseCase.execute(userId, id);
+      await this.deleteMemoUseCase.execute({ userId, memoId: id });
 
       res.status(204).send();
     } catch (error) {
-      this.handleError(error, res);
+      next(error);
     }
-  }
-
-  /**
-   * エラーを HTTP レスポンスにマップ
-   */
-  private handleError(error: unknown, res: Response): void {
-    logger.error('MemoController: エラーが発生', error as Error);
-
-    if (error instanceof InvalidMemoTextError) {
-      res.status(400).json({ error_code: 'E001', message: error.message });
-      return;
-    }
-
-    if (error instanceof MemoNotFoundError) {
-      res.status(404).json({ error_code: 'E003', message: error.message });
-      return;
-    }
-
-    if (error instanceof MemoAccessDeniedError) {
-      res.status(403).json({ error_code: 'E003', message: error.message });
-      return;
-    }
-
-    res.status(500).json({ error_code: 'E999', message: 'サーバー内部エラーが発生しました' });
   }
 }

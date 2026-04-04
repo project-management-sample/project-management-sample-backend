@@ -50,4 +50,10 @@ export interface MemoRepository {
    * メモを削除（物理削除）
    */
   delete(id: string): Promise<void>;
+
+  /**
+   * トランザクション内で処理を実行
+   * BEGIN/COMMIT/ROLLBACKを自動管理する
+   */
+  withTransaction<T>(fn: (repo: MemoRepository) => Promise<T>): Promise<T>;
 }

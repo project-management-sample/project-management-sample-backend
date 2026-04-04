@@ -5,6 +5,7 @@ import { AuthController } from '../interface/controllers/auth_controller';
 import { MemoRepositoryPostgres } from '../infrastructure/persistence/memo_repository_impl';
 import { CreateMemoUseCase } from '../usecase/create_memo_usecase';
 import { FindMemosUseCase } from '../usecase/find_memos_usecase';
+import { SearchMemosUseCase } from '../usecase/search_memos_usecase';
 import { UpdateMemoUseCase } from '../usecase/update_memo_usecase';
 import { DeleteMemoUseCase } from '../usecase/delete_memo_usecase';
 import {
@@ -40,6 +41,7 @@ export function setupServer(app: Express, pool: Pool): void {
   // ===== ユースケースの初期化 =====
   const createMemoUseCase = new CreateMemoUseCase(memoRepository);
   const findMemosUseCase = new FindMemosUseCase(memoRepository);
+  const searchMemosUseCase = new SearchMemosUseCase(memoRepository);
   const updateMemoUseCase = new UpdateMemoUseCase(memoRepository);
   const deleteMemoUseCase = new DeleteMemoUseCase(memoRepository);
 
@@ -47,6 +49,7 @@ export function setupServer(app: Express, pool: Pool): void {
   const memoController = new MemoController(
     createMemoUseCase,
     findMemosUseCase,
+    searchMemosUseCase,
     updateMemoUseCase,
     deleteMemoUseCase
   );
@@ -64,18 +67,20 @@ export function setupServer(app: Express, pool: Pool): void {
   app.post('/api/v1/auth/refresh', (req, res) => authController.refresh(req, res));
 
   // メモAPI（認証必須）
-  app.post('/api/v1/memos', authMiddleware, (req, res) =>
-    memoController.create(req, res)
+  app.post('/api/v1/memos', authMiddleware, (req, res, next) =>
+    memoController.create(req, res, next)
   );
 
-  app.get('/api/v1/memos', authMiddleware, (req, res) => memoController.list(req, res));
-
-  app.patch('/api/v1/memos/:id', authMiddleware, (req, res) =>
-    memoController.update(req, res)
+  app.get('/api/v1/memos', authMiddleware, (req, res, next) =>
+    memoController.list(req, res, next)
   );
 
-  app.delete('/api/v1/memos/:id', authMiddleware, (req, res) =>
-    memoController.delete(req, res)
+  app.patch('/api/v1/memos/:id', authMiddleware, (req, res, next) =>
+    memoController.update(req, res, next)
+  );
+
+  app.delete('/api/v1/memos/:id', authMiddleware, (req, res, next) =>
+    memoController.delete(req, res, next)
   );
 
   // ===== グローバルエラーハンドリング =====

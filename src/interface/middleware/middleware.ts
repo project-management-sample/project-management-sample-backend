@@ -85,6 +85,7 @@ export function validationMiddleware(req: Request, res: Response, next: NextFunc
 /**
  * グローバルエラーハンドリングミドルウェア
  * ドメインエラーを適切な HTTP ステータスコードにマップ
+ * リクエストコンテキストをログに含め、デバッグを容易にする
  */
 export function errorMiddleware(
   err: Error,
@@ -93,7 +94,18 @@ export function errorMiddleware(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction
 ): void {
-  logger.error('エラーが発生しました', err);
+  const isExpectedError =
+    err instanceof InvalidMemoTextError ||
+    err instanceof MemoNotFoundError ||
+    err instanceof MemoAccessDeniedError;
+
+  logger.error('エラーが発生しました', {
+    error: err.message,
+    stack: isExpectedError ? undefined : err.stack,
+    method: req.method,
+    path: req.path,
+    userId: req.user?.sub,
+  });
 
   if (err instanceof InvalidMemoTextError) {
     res.status(400).json({ error_code: 'E001', message: err.message });
@@ -110,6 +122,6 @@ export function errorMiddleware(
     return;
   }
 
-  // 予期しないエラー
+  // 予期しないエラー（スタックトレースはログ済みのためレスポンスには含めない）
   res.status(500).json({ error_code: 'E999', message: 'サーバー内部エラーが発生しました' });
 }

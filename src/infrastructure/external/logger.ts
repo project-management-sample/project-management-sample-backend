@@ -1,17 +1,30 @@
 /**
- * ロガー実装
+ * 構造化ロガー実装
+ *
+ * JSON形式でログを出力し、timestamp/level/message/contextを統一して記録する
  */
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+function log(level: LogLevel, message: string, context?: unknown): void {
+  const entry = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...(context !== undefined ? { context } : {}),
+  };
+
+  if (level === 'error') {
+    console.error(JSON.stringify(entry));
+  } else if (level === 'warn') {
+    console.warn(JSON.stringify(entry));
+  } else {
+    console.log(JSON.stringify(entry));
+  }
+}
+
 export const logger = {
-  debug: (message: string, data?: any) => {
-    console.log(`[DEBUG] ${message}`, data || '');
-  },
-  info: (message: string, data?: any) => {
-    console.log(`[INFO] ${message}`, data || '');
-  },
-  warn: (message: string, data?: any) => {
-    console.warn(`[WARN] ${message}`, data || '');
-  },
-  error: (message: string, error?: any) => {
-    console.error(`[ERROR] ${message}`, error || '');
-  },
+  debug: (message: string, context?: unknown) => log('debug', message, context),
+  info:  (message: string, context?: unknown) => log('info',  message, context),
+  warn:  (message: string, context?: unknown) => log('warn',  message, context),
+  error: (message: string, context?: unknown) => log('error', message, context),
 };

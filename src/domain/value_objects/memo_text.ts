@@ -22,7 +22,7 @@ export class MemoText {
    * バリデーションをここで実施
    */
   static create(text: string): MemoText {
-    return new MemoText(text);
+    return new MemoText(text.trim());
   }
 
   /**
