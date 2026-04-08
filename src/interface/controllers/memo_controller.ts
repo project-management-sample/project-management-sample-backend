@@ -59,11 +59,11 @@ export class MemoController {
         return;
       }
 
+      const { page, limit, keyword } = MemoValidator.validateListQuery(req.query);
       const pagination = Pagination.create(
-        parseInt(req.query.page as string) || Pagination.DEFAULT_PAGE,
-        parseInt(req.query.limit as string) || Pagination.DEFAULT_LIMIT
+        page || Pagination.DEFAULT_PAGE,
+        limit || Pagination.DEFAULT_LIMIT
       );
-      const keyword = req.query.keyword as string | undefined;
 
       let result;
       if (keyword && keyword.trim()) {

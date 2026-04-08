@@ -3,11 +3,14 @@ import { Pool } from 'pg';
 import { MemoController } from '../interface/controllers/memo_controller';
 import { AuthController } from '../interface/controllers/auth_controller';
 import { MemoRepositoryPostgres } from '../infrastructure/persistence/memo_repository_impl';
+import { InMemoryUserRepository } from '../domain/repositories/user_repository';
 import { CreateMemoUseCase } from '../usecase/create_memo_usecase';
 import { FindMemosUseCase } from '../usecase/find_memos_usecase';
 import { SearchMemosUseCase } from '../usecase/search_memos_usecase';
 import { UpdateMemoUseCase } from '../usecase/update_memo_usecase';
 import { DeleteMemoUseCase } from '../usecase/delete_memo_usecase';
+import { LoginUseCase } from '../usecase/login_usecase';
+import { RefreshTokenUseCase } from '../usecase/refresh_token_usecase';
 import {
   authMiddleware,
   errorMiddleware,
@@ -45,6 +48,10 @@ export function setupServer(app: Express, pool: Pool): void {
   const updateMemoUseCase = new UpdateMemoUseCase(memoRepository);
   const deleteMemoUseCase = new DeleteMemoUseCase(memoRepository);
 
+  const userRepository = new InMemoryUserRepository();
+  const loginUseCase = new LoginUseCase(userRepository);
+  const refreshTokenUseCase = new RefreshTokenUseCase();
+
   // ===== コントローラーの初期化 =====
   const memoController = new MemoController(
     createMemoUseCase,
@@ -53,7 +60,7 @@ export function setupServer(app: Express, pool: Pool): void {
     updateMemoUseCase,
     deleteMemoUseCase
   );
-  const authController = new AuthController();
+  const authController = new AuthController(loginUseCase, refreshTokenUseCase);
 
   // ===== ルーティング =====
 
@@ -63,8 +70,8 @@ export function setupServer(app: Express, pool: Pool): void {
   });
 
   // 認証API（認証不要）
-  app.post('/api/v1/auth/login', (req, res) => authController.login(req, res));
-  app.post('/api/v1/auth/refresh', (req, res) => authController.refresh(req, res));
+  app.post('/api/v1/auth/login', (req, res, next) => authController.login(req, res, next));
+  app.post('/api/v1/auth/refresh', (req, res, next) => authController.refresh(req, res, next));
 
   // メモAPI（認証必須）
   app.post('/api/v1/memos', authMiddleware, (req, res, next) =>

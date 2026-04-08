@@ -6,6 +6,11 @@ import {
   MemoAccessDeniedError,
   MemoNotFoundError,
 } from '../../domain/entities/errors';
+import {
+  InvalidCredentialsError,
+  InvalidRefreshTokenError,
+  AuthValidationError,
+} from '../../domain/entities/auth_errors';
 import { logger } from '../../infrastructure/external/logger';
 
 /**
@@ -97,7 +102,10 @@ export function errorMiddleware(
   const isExpectedError =
     err instanceof InvalidMemoTextError ||
     err instanceof MemoNotFoundError ||
-    err instanceof MemoAccessDeniedError;
+    err instanceof MemoAccessDeniedError ||
+    err instanceof InvalidCredentialsError ||
+    err instanceof InvalidRefreshTokenError ||
+    err instanceof AuthValidationError;
 
   logger.error('エラーが発生しました', {
     error: err.message,
@@ -119,6 +127,21 @@ export function errorMiddleware(
 
   if (err instanceof MemoAccessDeniedError) {
     res.status(403).json({ error_code: 'E003', message: err.message });
+    return;
+  }
+
+  if (err instanceof InvalidCredentialsError) {
+    res.status(401).json({ error_code: 'E002', message: err.message });
+    return;
+  }
+
+  if (err instanceof InvalidRefreshTokenError) {
+    res.status(401).json({ error_code: 'E002', message: err.message });
+    return;
+  }
+
+  if (err instanceof AuthValidationError) {
+    res.status(400).json({ error_code: 'E001', message: err.message });
     return;
   }
 
